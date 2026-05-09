@@ -11,10 +11,8 @@ class BloodRequest(models.Model):
     
     donors = models.ManyToManyField(
         settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='blood_requests'
+        related_name='donations_made', 
+        blank=True
     )
     
     blood_group = models.CharField(max_length=3)
