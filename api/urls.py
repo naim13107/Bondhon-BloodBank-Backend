@@ -24,7 +24,7 @@ urlpatterns = [
     path('payment/success/', payment_success, name='payment_success'),
     path('payment/fail/', payment_fail, name='payment_fail'),
     path('payment/cancel/', payment_cancel, name='payment_cancel'),
-    path('admin/users/<int:user_id>/', AdminDeleteUserView.as_view(), name='admin-delete-user'),      
-    path('admin/requests/<int:request_id>/', AdminDeleteRequestView.as_view(), name='admin-delete-request'),  
+    path('admin-panel/users/<int:user_id>/', AdminDeleteUserView.as_view(), name='admin-delete-user'),
+    path('admin-panel/requests/<int:request_id>/', AdminDeleteRequestView.as_view(), name='admin-delete-request'),
 
 ]

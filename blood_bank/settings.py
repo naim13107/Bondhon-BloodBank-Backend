@@ -174,7 +174,7 @@ SIMPLE_JWT = {
 }
 
 DOMAIN = 'localhost:5173' 
-SITE_NAME = 'BloodLink'
+SITE_NAME = 'Bondhon'
 
 DJOSER = {
     'EMAIL_FRONTEND_PROTOCOL': config('FRONTEND_PROTOCOL'),
