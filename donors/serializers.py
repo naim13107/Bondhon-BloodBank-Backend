@@ -3,7 +3,7 @@ from .models import DonorProfile
 
 
 class DonorProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    full_name = serializers.ReadOnlyField(source='user.get_full_name')
     email = serializers.EmailField(source='user.email', read_only=True)
 
     class Meta:
