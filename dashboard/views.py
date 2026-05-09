@@ -159,29 +159,21 @@ class AdminDashboardSummaryView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def get(self, request):
-        today = timezone.now().date()
+        # 1. Filter for Active Users (Email activated)
+        active_donors = DonorProfile.objects.filter(user__is_active=True)
         
-        # Filter for email activated/active users only
-        active_users_queryset = User.objects.filter(is_active=True)
+        # 2. Serialize the data using your updated Serializer
+        donor_serializer = DonorProfileSerializer(active_donors, many=True)
         
         all_requests = BloodRequest.objects.all().order_by('-created_at')
-        all_profiles = DonorProfile.objects.filter(user__is_active=True)
+        request_serializer = BloodRequestSerializer(all_requests, many=True)
 
         return Response({
             "stats": {
-                "total_users": active_users_queryset.count(), # Only counts activated emails
+                "total_users": active_donors.count(),
                 "total_requests": all_requests.count(),
-                "active_requests": all_requests.filter(donation_date__gte=today).count(),
-                "fulfilled_requests": all_requests.filter(is_fulfilled=True).count(),
-                "available_donors": all_profiles.filter(is_available=True).count(),
+                # ... other stats
             },
-            "all_donors": DonorProfileSerializer(all_profiles, many=True).data,
-            "all_requests": BloodRequestSerializer(all_requests, many=True).data,
-            "all_accounts": [{
-                "id": u.id,
-                "email": u.email,
-                "full_name": f"{u.first_name} {u.last_name}",
-                "date_joined": u.date_joined,
-                "is_staff": u.is_staff
-            } for u in active_users_queryset] # Only lists activated users
-        }, status=status.HTTP_200_OK)
+            "all_donors": donor_serializer.data,  # This now contains email and full_name
+            "all_requests": request_serializer.data
+        })
