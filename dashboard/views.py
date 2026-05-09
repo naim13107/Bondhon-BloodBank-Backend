@@ -154,3 +154,37 @@ class AdminDeleteRequestView(APIView):
 
         blood_request.delete()
         return Response({"message": "Request deleted successfully."}, status=status.HTTP_200_OK)
+
+class AdminDashboardSummaryView(APIView):
+    """
+    Dedicated endpoint for Admin Dashboard to see ALL platform data.
+    """
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def get(self, request):
+        today = timezone.now().date()
+        
+        # Fetching EVERYTHING - no filters applied
+        all_users = User.objects.all().order_by('-date_joined')
+        all_requests = BloodRequest.objects.all().order_by('-created_at')
+        all_profiles = DonorProfile.objects.all()
+
+        return Response({
+            "stats": {
+                "total_users": all_users.count(),
+                "total_requests": all_requests.count(),
+                "active_requests": all_requests.filter(donation_date__gte=today).count(),
+                "fulfilled_requests": all_requests.filter(is_fulfilled=True).count(),
+                "available_donors": all_profiles.filter(is_available=True).count(),
+            },
+            # Complete lists
+            "all_donors": DonorProfileSerializer(all_profiles, many=True).data,
+            "all_requests": BloodRequestSerializer(all_requests, many=True).data,
+            "all_accounts": [{
+                "id": u.id,
+                "email": u.email,
+                "full_name": f"{u.first_name} {u.last_name}",
+                "date_joined": u.date_joined,
+                "is_staff": u.is_staff
+            } for u in all_users]
+        }, status=status.HTTP_200_OK)
