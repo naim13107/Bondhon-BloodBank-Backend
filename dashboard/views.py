@@ -102,8 +102,10 @@ class AdminDeleteUserView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def delete(self, request, user_id):
+
         try:
             user = User.objects.get(pk=user_id)
+
         except User.DoesNotExist:
             return Response(
                 {"error": "User not found."},
@@ -119,17 +121,19 @@ class AdminDeleteUserView(APIView):
         try:
             with transaction.atomic():
 
-                # Remove donor relations first
+                # Remove donor relationships
                 user.donations_made.clear()
 
-                # Delete blood requests where user is recipient
-                BloodRequest.objects.filter(recipient=user).delete()
+                # Set recipient to NULL
+                BloodRequest.objects.filter(
+                    recipient=user
+                ).update(recipient=None)
 
-                # Finally delete user
+                # Delete user
                 user.delete()
 
             return Response(
-                {"message": "User and related data deleted successfully."},
+                {"message": "User deleted successfully."},
                 status=status.HTTP_200_OK
             )
 
