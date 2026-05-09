@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from donors.views import DonorViewSet
 from blood_request.views import BloodRequestViewSet,MyRequestsViewSet
-from dashboard.views import UserDashboardViewSet
+from dashboard.views import UserDashboardViewSet,AdminDeleteRequestView,AdminDeleteUserView
 from blood_request.views import initiate_payment,payment_history,payment_success,payment_cancel,payment_fail
 
 router = DefaultRouter()
@@ -24,6 +24,7 @@ urlpatterns = [
     path('payment/success/', payment_success, name='payment_success'),
     path('payment/fail/', payment_fail, name='payment_fail'),
     path('payment/cancel/', payment_cancel, name='payment_cancel'),
-
+    path('admin/users/<int:user_id>/', AdminDeleteUserView.as_view(), name='admin-delete-user'),      
+    path('admin/requests/<int:request_id>/', AdminDeleteRequestView.as_view(), name='admin-delete-request'),  
 
 ]

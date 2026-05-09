@@ -1,10 +1,14 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.views import APIView 
 from rest_framework.response import Response
 from django.utils import timezone
 from donors.models import DonorProfile
 from blood_request.models import BloodRequest
 from donors.serializers import DonorProfileSerializer
 from blood_request.serializers import BloodRequestSerializer
+from django.contrib.auth import get_user_model 
+
+User = get_user_model()
 
 class UserDashboardViewSet(viewsets.ViewSet):
     """
@@ -90,3 +94,32 @@ class UserDashboardViewSet(viewsets.ViewSet):
                 "is_available": profile.is_available if profile else False
             }
         }, status=status.HTTP_200_OK)
+    
+class AdminDeleteUserView(APIView):
+     
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def delete(self, request, user_id):
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user == request.user:
+            return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.delete()
+        return Response({"message": "User deleted successfully."}, status=status.HTTP_200_OK)
+
+
+class AdminDeleteRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+
+    def delete(self, request, request_id):
+        try:
+            blood_request = BloodRequest.objects.get(pk=request_id)
+        except BloodRequest.DoesNotExist:
+            return Response({"error": "Blood request not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        blood_request.delete()
+        return Response({"message": "Request deleted successfully."}, status=status.HTTP_200_OK)
