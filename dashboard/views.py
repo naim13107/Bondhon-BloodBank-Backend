@@ -96,20 +96,26 @@ class UserDashboardViewSet(viewsets.ViewSet):
         }, status=status.HTTP_200_OK)
     
 class AdminDeleteUserView(APIView):
-     
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
     def delete(self, request, user_id):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found ."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if user == request.user:
             return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Delete all blood requests where this user is the recipient first
+        BloodRequest.objects.filter(recipient=user).delete()
+        
+        # Also remove user from donor lists on any requests they accepted
+        for blood_request in BloodRequest.objects.filter(donors=user):
+            blood_request.donors.remove(user)
+
         user.delete()
-        return Response({"message": "User deleted successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "User and their data deleted successfully."}, status=status.HTTP_200_OK)
 
 
 class AdminDeleteRequestView(APIView):
