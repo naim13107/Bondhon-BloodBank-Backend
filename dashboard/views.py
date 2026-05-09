@@ -6,7 +6,8 @@ from donors.models import DonorProfile
 from blood_request.models import BloodRequest
 from donors.serializers import DonorProfileSerializer
 from blood_request.serializers import BloodRequestSerializer
-from django.contrib.auth import get_user_model 
+from django.contrib.auth import get_user_model
+from django.db import transaction
 
 User = get_user_model()
 
@@ -95,6 +96,8 @@ class UserDashboardViewSet(viewsets.ViewSet):
             }
         }, status=status.HTTP_200_OK)
     
+
+
 class AdminDeleteUserView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
@@ -102,21 +105,39 @@ class AdminDeleteUserView(APIView):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         if user == request.user:
-            return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "You cannot delete your own account."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Delete all blood requests where this user is the recipient first
-        BloodRequest.objects.filter(recipient=user).delete()
-        
-        # Also remove user from donor lists on any requests they accepted
-        for blood_request in BloodRequest.objects.filter(donors=user):
-            blood_request.donors.remove(user)
+        try:
+            with transaction.atomic():
 
-        user.delete()
-        return Response({"message": "User and their data deleted successfully."}, status=status.HTTP_200_OK)
+                # Remove donor relations first
+                user.donations_made.clear()
 
+                # Delete blood requests where user is recipient
+                BloodRequest.objects.filter(recipient=user).delete()
+
+                # Finally delete user
+                user.delete()
+
+            return Response(
+                {"message": "User and related data deleted successfully."},
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class AdminDeleteRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]

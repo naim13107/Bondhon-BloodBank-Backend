@@ -4,10 +4,12 @@ from django.utils import timezone
 
 class BloodRequest(models.Model):
     recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='received_requests'
-    )
+    settings.AUTH_USER_MODEL,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name='received_requests'
+)
     
     donors = models.ManyToManyField(
         settings.AUTH_USER_MODEL, 
