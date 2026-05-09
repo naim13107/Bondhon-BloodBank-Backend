@@ -103,7 +103,7 @@ class AdminDeleteUserView(APIView):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User not found ."}, status=status.HTTP_404_NOT_FOUND)
 
         if user == request.user:
             return Response({"error": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
